@@ -16,6 +16,7 @@ from datetime import datetime
 
 
 def log_error(e):
+    # TODO: Add functionality for error log to text file
     print(e)
 
 
@@ -23,7 +24,7 @@ def create_url(website, title ='', location = ''):
     '''
     Attempts to format the url to get the right title and location
     '''
-    
+    # TODO: Add functionality for other websites like monster etc...
     website = website.lower()
     if website in ('indeed','monster'):
         if website == 'indeed':
@@ -63,7 +64,7 @@ def is_good_response(resp):
             and content_type is not None 
             and content_type.find('html') > -1)
         
-
+    
 def job_extract(div):
     '''
     Extracts the job title from the soup
@@ -78,19 +79,31 @@ def company_extract(div):
     comp = [d.text.strip() if d is not None else print('Fucked') for d in div.find_all(name = 'span', attrs = {'class':'company'})]
     return comp[0]
 
+def summary_extract(div):
+    '''
+    '''
+    summ = [d.text.strip() for d in  div.find_all('div', {'class':'summary'})]
+    return summ[0]
+
 
 def extract_from_soup1(soup):
     jobs = []
     companies = []
     code = []
+    loc = []
+    summary = []
     for div in soup.find_all(name='div', attrs={'data-tn-component': 'organicJob'}):
         jobs.append(job_extract(div))
         companies.append(company_extract(div))
         code.append(div['data-jk'])
+        loc.append(div.find(name = 'div', attrs = {'class':'recJobLoc'})['data-rc-loc'])
+        summary.append(summary_extract(div))
     
     df = pd.DataFrame({'Job_Id': code,
                        'Title': jobs,
-                       'Company': companies})
+                       'Company': companies,
+                       'Location': loc,
+                       'Summary': summary})
     return df
 
 
