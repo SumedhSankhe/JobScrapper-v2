@@ -103,7 +103,8 @@ def extract_from_soup1(soup):
                        'Title': jobs,
                        'Company': companies,
                        'Location': loc,
-                       'Summary': summary})
+                       'Summary': summary,
+                       'dttm': str(datetime.now())})
     return df
 
 
@@ -134,8 +135,7 @@ def paiginate(**kwargs):
     fname = str(datetime.today().strftime('%Y-%m-%d'))
     fname = path+fname+'.csv'
     df.to_csv(fname, index = False)
-    
-    return print('Done')
+    print('Done')
 
 
 paiginate(website = 'indeed', title = 'data scientist', location = 'boston', limit = 20)
