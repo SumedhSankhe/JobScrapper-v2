@@ -86,25 +86,36 @@ def summary_extract(div):
     return summ[0]
 
 
+def get_job_post(div):
+    link = [d['href'] for d in div.find_all('a')]
+    link = [l for l in link if l.startswith('/rc')]
+    
+    if len(link) > 1:
+        link = [l for l in link if ('jk' or 'ccid') in l ]
+    elif len(link) == 0:
+        return 'Link Not Found'
+    else:
+        return 'https://www.indeed.com'+link[0]
+        
+
 def extract_from_soup1(soup):
-    jobs = []
-    companies = []
-    code = []
-    loc = []
-    summary = []
+    jobs, companies, code, loc, summary, link = [],[],[],[],[],[]
+    
     for div in soup.find_all(name='div', attrs={'data-tn-component': 'organicJob'}):
         jobs.append(job_extract(div))
         companies.append(company_extract(div))
         code.append(div['data-jk'])
         loc.append(div.find(name = 'div', attrs = {'class':'recJobLoc'})['data-rc-loc'])
         summary.append(summary_extract(div))
-    
-    df = pd.DataFrame({'Job_Id': code,
+        link.append(get_job_post(div))
+        
+    df = pd.DataFrame({'dttm': str(datetime.now()),
+                       'Job_Id': code,
                        'Title': jobs,
                        'Company': companies,
                        'Location': loc,
                        'Summary': summary,
-                       'dttm': str(datetime.now())})
+                       'link': link})
     return df
 
 
@@ -126,18 +137,20 @@ def paiginate(**kwargs):
     for r in tqdm(range(0,pg,10)):
         URL = url+'&start={}&limit={}'.format(pg,pg+10)
         new_soup = get_url(URL)
-        df_list.append(extract_from_soup1(new_soup))
+        try:
+            df_list.append(extract_from_soup1(new_soup))
+        except Exception as e:
+            log_error(e)
         sleep(0.03)
     
     df = pd.concat(df_list)
     df = df.drop_duplicates('Job_Id')
     path= 'D:\\Github\\JobScrapper-v2\\daily_data\\'
-    fname = str(datetime.today().strftime('%Y-%m-%d'))
+    fname = str(datetime.today().strftime('%Y%m%d%H%m'))
     fname = path+fname+'.csv'
     df.to_csv(fname, index = False)
     print('Done')
 
 
-paiginate(website = 'indeed', title = 'data scientist', location = 'boston', limit = 20)
-
+paiginate(website = 'indeed', title = 'data scientist', location = 'boston', limit = 2000)
 
