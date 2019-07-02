@@ -18,10 +18,12 @@ if not os.path.exists(directory):
     with open(directory, "w") as p:
         pass
 else:
-    df1 = pd.read_csv(directory)
-    
-df2 = pd.read_csv(latest_file)
+    try:
+        df1 = pd.read_csv(directory)
+        df2 = pd.read_csv(latest_file)
+        df = df1.append(df2)
+    except:
+        df = pd.read_csv(latest_file)
 
-df = df1.append(df2)
 df = df.drop_duplicates('Job_Id')
 df.to_csv(directory, index = False)
