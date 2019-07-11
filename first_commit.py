@@ -20,7 +20,7 @@ def log_error(e):
     print(e)
 
 
-def create_url(website, title ='', location = ''):
+def create_url(website, title ='', location = '', expLvl = None):
     '''
     Attempts to format the url to get the right title and location
     '''
@@ -31,7 +31,9 @@ def create_url(website, title ='', location = ''):
             title = title.replace(' ','+')
             location = location.replace(',','%2C')
             location = location.replace(' ','+')
-            url = 'https://www.indeed.com/jobs?q={}&l={}'.format(title, location)         
+            url = 'https://www.indeed.com/jobs?q={}&l={}'.format(title, location)
+            if not expLvl:
+                url = url+'&explvl='+expLvl
     else:
         log_error('Incorrect Website, Website not yet included') 
     
@@ -123,7 +125,7 @@ def paiginate(**kwargs):
     ''' 
     Gets number of pages to paginate through
     '''
-    url = create_url(kwargs['website'], kwargs['title'], kwargs['location'])
+    url = create_url(kwargs['website'], kwargs['title'], kwargs['location'], kwargs['expLvl'])
     soup = get_url(url)
     
     pg = soup.find(name = 'div', attrs = {'id':'searchCount'}).text.split(' ')[-2]
@@ -152,5 +154,5 @@ def paiginate(**kwargs):
     print('Done')
 
 
-paiginate(website = 'indeed', title = 'data scientist', location = 'boston', limit = 2000)
+paiginate(website = 'indeed', title = 'data scientist', location = 'boston', expLvl = None, limit = 2000)
 
