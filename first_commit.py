@@ -13,14 +13,18 @@ import pandas as pd
 from time import sleep
 from tqdm import tqdm
 from datetime import datetime
+import logging
+
+# specific loggers
+logger = logging.getLogger(__name__)
+formatter = logging.Formatter('%(asctime)s: %(levelname)s: %(name)s: %(message)s')
+file_handler = logging.FileHandler('scrapper.log')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+logger.setLevel(logging.DEBUG)
 
 
-def log_error(e):
-    # TODO: Add functionality for error log to text file
-    print(e)
-
-
-def create_url(website, title ='', location = '', expLvl = None):
+def create_url(website, title ='', location = '', expLvl = ''):
     '''
     Attempts to format the url to get the right title and location
     '''
@@ -32,11 +36,11 @@ def create_url(website, title ='', location = '', expLvl = None):
             location = location.replace(',','%2C')
             location = location.replace(' ','+')
             url = 'https://www.indeed.com/jobs?q={}&l={}'.format(title, location)
-            if not expLvl:
-                url = url+'&explvl='+expLvl
+            if expLvl:
+                url = url+'&explvl='+expLvl+'#'
     else:
-        log_error('Incorrect Website, Website not yet included') 
-    
+        logger.error('Incorrect Website, {} not yet included'.format(website)) 
+
     return url
 
 def get_url(url):
@@ -48,12 +52,14 @@ def get_url(url):
     try:
         with closing(get(url, stream=True)) as resp:
             if is_good_response(resp):
+                logger.debug('Website response: {}'.format(str(resp)))
                 return BeautifulSoup(resp.content, 'html.parser')
             else:
+                logger.error('Website response :{}'.format(str(resp)))
                 return None
 
     except RequestException as e:
-        log_error('Error during requests to {0} : {1}'.format(url, str(e)))
+        logger.error('Error during requests to {} : {}'.format(url, str(e)))
         return None
 
 
@@ -142,7 +148,7 @@ def paiginate(**kwargs):
         try:
             df_list.append(extract_from_soup1(new_soup))
         except Exception as e:
-            log_error(e)
+            logger.error('Could not paginate {}'.format(e))
         sleep(0.03)
     
     df = pd.concat(df_list)
@@ -152,7 +158,8 @@ def paiginate(**kwargs):
     fname = path+fname+'.csv'
     df.to_csv(fname, index = False)
     print('Done')
+    return df
 
 
-paiginate(website = 'indeed', title = 'data scientist', location = 'boston', expLvl = None, limit = 2000)
+x = paiginate(website = 'indeed', title = 'data scientist', location = 'boston', expLvl = 'entry level', limit = 100)
 
